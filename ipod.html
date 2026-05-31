@@ -514,9 +514,8 @@ function showView(name) {
 }
 function navigate(name) { showView(name); }
 function goBack() {
-  var d = BACK_MAP[S.view];
-  if (d) showView(d);
-  else showView('main');
+  var d = BACK_MAP[S.view] || 'main';
+  showView(d);
 }
 
 // ── Main Menu ────────────────────────────────────────────────
@@ -552,7 +551,7 @@ function wSelect() {
   if (S.view === 'main') {
     var dest = ['music','radio','settings'][S.menuSel];
     showView(dest);
-    if (dest === 'music'  && S.playlist.length === 0 && !S._fetching) fetchMusic();
+   if (dest === 'music' && !S._fetching) fetchMusic();
     if (dest === 'radio'  && S.stations.length === 0) loadRadio();
     if (dest === 'settings') loadSettingsUI();
   } else if (S.view === 'music') {
