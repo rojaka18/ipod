@@ -658,8 +658,7 @@ function fetchMusic() {
           album:       'Google Drive',
           art:         null,
           // URL stream langsung via Drive API (tidak perlu redirect download)
-          streamUrl:   'https://www.googleapis.com/drive/v3/files/' + f.id
-                       + '?alt=media&key=' + encodeURIComponent(S.apiKey),
+          streamUrl: 'https://drive.google.com/uc?export=open&id=' + f.id,
           metaLoaded:  false,
         };
       });
