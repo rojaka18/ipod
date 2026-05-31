@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="theme-color" content="#b8a898"/>
+<title>iPod</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; font-family:'DM Sans', sans-serif; background:#b8a898; }
+
+/* ── Scene ── */
+.scene {
+  width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 40% 30%, #c8bfaf 0%, #a89888 50%, #887868 100%);
+}
+
+/* ── iPod Shell ── */
+.ipod {
+  width: 260px;
+  background: linear-gradient(175deg, #f0ece4 0%, #e8e2d8 40%, #ddd6c8 100%);
+  border-radius: 28px;
+  border: 1px solid #c0b8a8;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 0 rgba(0,0,0,.12),
+    0 8px 32px rgba(0,0,0,.35),
+    0 2px 4px rgba(0,0,0,.2);
+  padding: 16px 16px 20px;
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* ── Screen ── */
+.screen-bezel {
+  background: #111;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 16px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.9);
+}
+.screen {
+  width: 100%;
+  height: 190px;
+  background: #9db8a0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.screen-header {
+  background: linear-gradient(180deg, #3a5a7a, #1e3a5a);
+  height: 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+.sh-title { font-size:11px; font-weight:500; color:#fff; font-family:'DM Mono',monospace; letter-spacing:.5px; }
+.sh-right { display:flex; align-items:center; gap:5px; }
+.sh-clock { font-size:9px; color:rgba(255,255,255,.8); font-family:'DM Mono',monospace; }
+.batt { width:18px; height:9px; border:1.5px solid rgba(255,255,255,.55); border-radius:2px; position:relative; }
+.batt::after { content:''; position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:2px; height:5px; background:rgba(255,255,255,.55); border-radius:0 1px 1px 0; }
+.batt-fill { height:100%; background:#7ccc7c; border-radius:1px; transition:width .5s; }
+
+.screen-body { height:170px; position:relative; overflow:hidden; }
+
+/* ── Views ── */
+.view {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background:#9db8a0;
+  transition: transform .22s cubic-bezier(.4,0,.2,1);
+}
+.view.active    { transform:translateX(0); z-index:2; }
+.view.slide-left  { transform:translateX(-100%); z-index:1; }
+.view.slide-right { transform:translateX(100%); z-index:1; }
+
+/* ── Menu ── */
+.menu-list { padding:2px 0; }
+.menu-item {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 10px; font-size:12px; color:#1a2a1a;
+  cursor:pointer; border-bottom:1px solid rgba(0,0,0,.06);
+  transition: background .1s;
+}
+.menu-item.selected { background:linear-gradient(90deg,#3a5a7a,#1e3a5a); color:#fff; }
+.menu-item.selected .arrow { color:rgba(255,255,255,.6); }
+.mi-left { display:flex; align-items:center; gap:7px; }
+.mi-icon { font-size:13px; width:16px; text-align:center; }
+.arrow { font-size:10px; color:#999; }
+
+/* ── Music List ── */
+.scroll-list { height:170px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.scroll-list::-webkit-scrollbar { width:3px; }
+.scroll-list::-webkit-scrollbar-thumb { background:rgba(0,0,0,.2); border-radius:2px; }
+.track-item {
+  padding:5px 10px; cursor:pointer;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  display:flex; align-items:center; gap:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.track-item.selected { background:linear-gradient(90deg,#3a5a7a,#1e3a5a); }
+.track-item.selected .ti-title,
+.track-item.selected .ti-artist { color:#fff; }
+.ti-num { font-size:9px; color:#888; width:14px; text-align:right; font-family:'DM Mono',monospace; flex-shrink:0; }
+.ti-info { flex:1; min-width:0; }
+.ti-title { font-size:11px; color:#1a2a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ti-artist { font-size:9px; color:#5a7a5a; margin-top:1px; }
+.empty-msg { text-align:center; padding:20px 12px; font-size:11px; color:#5a7a5a; line-height:1.8; }
+.empty-msg a { color:#3a5a7a; cursor:pointer; text-decoration:underline; }
+
+/* ── Now Playing ── */
+.np-view { padding:8px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.album-art {
+  width:80px; height:80px; border-radius:5px; flex-shrink:0;
+  background:linear-gradient(135deg,#4a3a6a,#2a1a4a);
+  display:flex; align-items:center; justify-content:center;
+  font-size:30px; overflow:hidden;
+  box-shadow:0 3px 8px rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.15);
+}
+.album-art img { width:100%; height:100%; object-fit:cover; border-radius:4px; }
+.np-meta { width:100%; text-align:center; }
+.np-title  { font-size:11px; font-weight:500; color:#1a2a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.np-artist { font-size:10px; color:#3a5a3a; margin-top:1px; }
+.np-album  { font-size:9px; color:#5a7a5a; margin-top:1px; }
+.prog-wrap { width:100%; margin-top:6px; }
+.prog-bar  { width:100%; height:4px; background:rgba(0,0,0,.15); border-radius:2px; cursor:pointer; }
+.prog-fill { height:100%; background:#1e3a5a; border-radius:2px; transition:width .1s linear; }
+.prog-times { display:flex; justify-content:space-between; font-size:9px; color:#3a5a3a; margin-top:2px; font-family:'DM Mono',monospace; }
+
+/* ── Radio ── */
+.radio-search { padding:4px 8px; border-bottom:1px solid rgba(0,0,0,.1); }
+.radio-search input {
+  width:100%; padding:4px 8px; font-size:11px;
+  background:rgba(255,255,255,.55); border:1px solid rgba(0,0,0,.15);
+  border-radius:4px; outline:none; font-family:'DM Sans',sans-serif; color:#1a2a1a;
+}
+.radio-list { height:142px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.radio-list::-webkit-scrollbar { width:3px; }
+.radio-list::-webkit-scrollbar-thumb { background:rgba(0,0,0,.2); border-radius:2px; }
+.station-item {
+  padding:5px 10px; cursor:pointer;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  display:flex; align-items:center; gap:6px;
+}
+.station-item.selected { background:linear-gradient(90deg,#3a5a7a,#1e3a5a); }
+.station-item.selected .st-name,
+.station-item.selected .st-loc { color:#fff; }
+.st-dot { width:6px; height:6px; border-radius:50%; background:#aaa; flex-shrink:0; }
+.station-item.selected .st-dot { background:#7cff7c; }
+.st-info { flex:1; min-width:0; }
+.st-name { font-size:11px; color:#1a2a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.st-loc  { font-size:9px; color:#5a7a5a; margin-top:1px; }
+.list-msg { text-align:center; padding:20px; font-size:10px; color:#5a7a5a; line-height:1.6; }
+
+/* ── Now Radio ── */
+.nr-view { padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.radio-art {
+  width:76px; height:76px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,#2a4a6a,#3a6a8a);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; position:relative;
+  box-shadow:0 3px 8px rgba(0,0,0,.3);
+}
+.ripple {
+  position:absolute; border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.2);
+  animation:ripple 2.2s ease-out infinite;
+}
+.ripple:nth-child(2) { animation-delay:.7s; }
+.ripple:nth-child(3) { animation-delay:1.4s; }
+@keyframes ripple {
+  0%   { width:20px; height:20px; opacity:.7; }
+  100% { width:80px; height:80px; opacity:0; }
+}
+.radio-icon-inner { z-index:1; font-size:26px; }
+.live-badge { font-size:9px; color:#c84a4a; font-family:'DM Mono',monospace; letter-spacing:1px; }
+
+/* ── Settings ── */
+.settings-view { overflow-y:auto; height:170px; -webkit-overflow-scrolling:touch; }
+.settings-view::-webkit-scrollbar { width:3px; }
+.settings-view::-webkit-scrollbar-thumb { background:rgba(0,0,0,.2); border-radius:2px; }
+.setting-section { padding:4px 10px 2px; font-size:9px; color:#4a6a4a; letter-spacing:1px; text-transform:uppercase; background:rgba(0,0,0,.05); }
+.setting-row { padding:6px 10px; border-bottom:1px solid rgba(0,0,0,.06); display:flex; align-items:center; justify-content:space-between; }
+.s-label { font-size:11px; color:#1a2a1a; }
+.s-val   { font-size:10px; color:#3a5a7a; font-family:'DM Mono',monospace; }
+.tog { width:28px; height:15px; border-radius:8px; background:#c0c0b0; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+.tog.on { background:#3a5a7a; }
+.tog::after { content:''; position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:#fff; transition:left .18s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+.tog.on::after { left:15px; }
+
+/* ── Drive Config Section ── */
+.cfg-section { padding:7px 8px 4px; }
+.cfg-label { font-size:9px; color:#4a6a4a; letter-spacing:.8px; text-transform:uppercase; margin-bottom:3px; display:block; }
+.cfg-input {
+  width:100%; padding:5px 8px; font-size:10px;
+  background:rgba(255,255,255,.55); border:1px solid rgba(0,0,0,.15);
+  border-radius:4px; outline:none;
+  font-family:'DM Mono',monospace; color:#1a2a1a; margin-bottom:4px;
+}
+.cfg-input:focus { border-color:#3a5a7a; background:rgba(255,255,255,.8); }
+.cfg-row { display:flex; gap:4px; }
+.save-btn {
+  flex:1; padding:5px 0;
+  font-size:10px; background:#1e3a5a; color:#fff;
+  border:none; border-radius:4px; cursor:pointer;
+  font-family:'DM Sans',sans-serif; letter-spacing:.5px;
+  transition: background .15s; -webkit-tap-highlight-color:transparent;
+}
+.save-btn:active { background:#143050; }
+.save-btn.sec { background:#4a6a4a; }
+.save-btn.sec:active { background:#3a5a3a; }
+.cfg-status { font-size:9px; color:#5a7a5a; text-align:center; margin-top:3px; min-height:12px; }
+
+/* ── Click Wheel ── */
+.wheel-wrap {
+  width:155px; height:155px; border-radius:50%;
+  background:linear-gradient(145deg, #ddd8cc, #ccc4b4);
+  border:1px solid #b8b0a0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.8),
+    inset 0 -1px 0 rgba(0,0,0,.12),
+    0 3px 8px rgba(0,0,0,.2);
+  margin:0 auto;
+  position:relative;
+}
+.wbtn {
+  position:absolute; display:flex; align-items:center; justify-content:center;
+  width:38px; height:38px; cursor:pointer;
+  color:#777; font-size:11px; font-weight:600;
+  transition:color .1s; border-radius:50%;
+  -webkit-tap-highlight-color:transparent;
+}
+.wbtn:active { color:#333; }
+.wbtn-top    { top:5px;    left:50%; transform:translateX(-50%); }
+.wbtn-bottom { bottom:5px; left:50%; transform:translateX(-50%); }
+.wbtn-left   { left:5px;   top:50%;  transform:translateY(-50%); }
+.wbtn-right  { right:5px;  top:50%;  transform:translateY(-50%); }
+.wbtn-label  { font-size:8px; font-weight:400; letter-spacing:.5px; color:#999; }
+.wcenter {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:56px; height:56px; border-radius:50%;
+  background:linear-gradient(145deg, #e8e2d8, #d4cec4);
+  border:1px solid #b8b0a0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 2px 4px rgba(0,0,0,.15);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:#555; font-size:17px;
+  transition:all .1s; -webkit-tap-highlight-color:transparent;
+}
+.wcenter:active {
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.2);
+  transform:translate(-50%,-50%) scale(.96);
+}
+
+/* ── Bottom Buttons ── */
+.btm-btns { display:flex; justify-content:space-between; margin-top:10px; padding:0 4px; }
+.hw-btn {
+  padding:5px 18px; font-size:10px; letter-spacing:.5px;
+  background:linear-gradient(180deg, #ddd8cc, #ccc4b4);
+  border:1px solid #b0a898; border-radius:10px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 2px rgba(0,0,0,.12);
+  cursor:pointer; color:#555; font-family:'DM Sans',sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+.hw-btn:active { box-shadow:inset 0 1px 2px rgba(0,0,0,.2); transform:translateY(1px); }
+
+/* ── Logo ── */
+.logo-row { text-align:center; margin-bottom:12px; }
+.ipod-brand { font-size:12px; color:#aaa; letter-spacing:4px; font-weight:300; }
+
+/* ── Mobile: full screen ── */
+@media (max-width: 520px) {
+  html, body { background:#b8a898; }
+  .scene { background:#b8a898; align-items:flex-start; padding-top:0; }
+  .ipod {
+    width:100%; min-height:100vh; border-radius:0; border:none;
+    box-shadow:none;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 28px);
+  }
+  .screen { height: min(50vw, 210px); }
+  .screen-body { height: calc(min(50vw, 210px) - 20px); }
+  .scroll-list,
+  .radio-list,
+  .settings-view { height: calc(min(50vw, 210px) - 20px); }
+  .wheel-wrap { width:min(62vw, 210px); height:min(62vw, 210px); }
+  .wcenter { width:min(24vw, 70px); height:min(24vw, 70px); }
+  .wbtn { width:min(14vw, 46px); height:min(14vw, 46px); }
+  .logo-row { margin-bottom:8px; }
+}
+
+/* ── Tablet ── */
+@media (min-width:521px) and (max-width:1023px) {
+  .ipod { width:280px; }
+}
+</style>
+</head>
+<body>
+<div class="scene">
+<div class="ipod">
+
+  <div class="logo-row">
+    <span class="ipod-brand">iPod</span>
+  </div>
+
+  <!-- SCREEN -->
+  <div class="screen-bezel">
+    <div class="screen">
+      <div class="screen-header">
+        <span class="sh-title" id="shTitle">iPod</span>
+        <div class="sh-right">
+          <span class="sh-clock" id="clockEl">--:--</span>
+          <div class="batt"><div class="batt-fill" id="battFill" style="width:85%"></div></div>
+        </div>
+      </div>
+
+      <div class="screen-body" id="screenBody">
+
+        <!-- MAIN MENU -->
+        <div class="view active" id="vMain">
+          <div class="menu-list">
+            <div class="menu-item selected" id="mi0" onclick="menuSelect(0)">
+              <div class="mi-left"><span class="mi-icon">♪</span>Music</div>
+              <span class="arrow">›</span>
+            </div>
+            <div class="menu-item" id="mi1" onclick="menuSelect(1)">
+              <div class="mi-left"><span class="mi-icon">📻</span>Radio</div>
+              <span class="arrow">›</span>
+            </div>
+            <div class="menu-item" id="mi2" onclick="menuSelect(2)">
+              <div class="mi-left"><span class="mi-icon">⚙</span>Settings</div>
+              <span class="arrow">›</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MUSIC LIST -->
+        <div class="view slide-right" id="vMusic">
+          <div class="scroll-list" id="musicList">
+            <div class="empty-msg">Belum ada lagu.<br>Pergi ke <a onclick="navigate('settings')">Settings</a><br>dan isi Folder ID + API Key.</div>
+          </div>
+        </div>
+
+        <!-- NOW PLAYING -->
+        <div class="view slide-right" id="vNowPlaying">
+          <div class="np-view">
+            <div class="album-art" id="albumArt"><span id="artEmoji">♪</span></div>
+            <div class="np-meta">
+              <div class="np-title"  id="npTitle">—</div>
+              <div class="np-artist" id="npArtist">—</div>
+              <div class="np-album"  id="npAlbum"></div>
+              <div class="prog-wrap">
+                <div class="prog-bar" id="progBar" onclick="seekAudio(event)">
+                  <div class="prog-fill" id="progFill" style="width:0%"></div>
+                </div>
+                <div class="prog-times">
+                  <span id="tNow">0:00</span>
+                  <span id="tTot">0:00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RADIO LIST -->
+        <div class="view slide-right" id="vRadio">
+          <div class="radio-search">
+            <input type="search" id="radioQ" placeholder="Cari nama / kota / genre..." oninput="filterStations(this.value)" autocomplete="off" autocorrect="off" spellcheck="false"/>
+          </div>
+          <div class="radio-list" id="radioList">
+            <div class="list-msg">Memuat stasiun...</div>
+          </div>
+        </div>
+
+        <!-- NOW RADIO -->
+        <div class="view slide-right" id="vNowRadio">
+          <div class="nr-view">
+            <div class="radio-art">
+              <div class="ripple"></div><div class="ripple"></div><div class="ripple"></div>
+              <span class="radio-icon-inner">📻</span>
+            </div>
+            <div class="np-meta">
+              <div class="np-title"  id="rnName">—</div>
+              <div class="np-artist" id="rnLoc">—</div>
+              <div class="np-album"  id="rnTag"></div>
+              <div style="text-align:center;margin-top:6px">
+                <span class="live-badge">● LIVE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="view slide-right" id="vSettings">
+          <div class="settings-view">
+
+            <div class="setting-section">Google Drive</div>
+            <div class="cfg-section">
+              <span class="cfg-label">Folder ID</span>
+              <input class="cfg-input" id="cfgFolderId" type="text"
+                placeholder="1SW-gDHh..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+              <span class="cfg-label">API Key</span>
+              <input class="cfg-input" id="cfgApiKey" type="text"
+                placeholder="AIzaSy..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+              <div class="cfg-row">
+                <button class="save-btn" onclick="saveDriveConfig()">Simpan &amp; Muat</button>
+                <button class="save-btn sec" onclick="reloadMusic()">↺ Reload</button>
+              </div>
+              <div class="cfg-status" id="cfgStatus"></div>
+            </div>
+
+            <div class="setting-section">Playback</div>
+            <div class="setting-row">
+              <span class="s-label">Repeat</span>
+              <div class="tog" id="togRepeat" onclick="toggleSetting('repeat')"></div>
+            </div>
+            <div class="setting-row">
+              <span class="s-label">Shuffle</span>
+              <div class="tog" id="togShuffle" onclick="toggleSetting('shuffle')"></div>
+            </div>
+            <div class="setting-row">
+              <span class="s-label">Volume</span>
+              <span class="s-val" id="volLabel">80%</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /screen-body -->
+    </div>
+  </div><!-- /screen-bezel -->
+
+  <!-- CLICK WHEEL -->
+  <div class="wheel-wrap">
+    <div class="wbtn wbtn-top"    onclick="wUp()"   ><span class="wbtn-label">MENU</span></div>
+    <div class="wbtn wbtn-bottom" onclick="wDown()" >▾</div>
+    <div class="wbtn wbtn-left"   onclick="wBack()" >◂◂</div>
+    <div class="wbtn wbtn-right"  onclick="wFwd()"  >▸▸</div>
+    <div class="wcenter" id="wcenter" onclick="wSelect()">▶</div>
+  </div>
+
+  <!-- BOTTOM BUTTONS -->
+  <div class="btm-btns">
+    <button class="hw-btn" onclick="goBack()">MENU</button>
+    <button class="hw-btn" onclick="togglePlay()">▶ ❙❙</button>
+  </div>
+
+</div><!-- /ipod -->
+</div><!-- /scene -->
+
+<audio id="audioEl" crossorigin="anonymous"></audio>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG — Isi Folder ID dan API Key di sini, atau lewat Settings
+// ═══════════════════════════════════════════════════════════════
+var DEFAULT_FOLDER_ID = '1SW-gDHhYvywVYmpPWudspxq-tzZZ5mSD';
+var DEFAULT_API_KEY   = 'AIzaSyBG-4Uz-1lrrwwxo-dkAi7G6Zmwq5rcdi0';  // ← isi API Key kamu di sini
+
+// ── State ────────────────────────────────────────────────────
+var S = {
+  view:        'main',
+  menuSel:     0,
+  musicSel:    0,
+  radioSel:    0,
+  playlist:    [],
+  stations:    [],
+  filtered:    [],
+  curTrack:    -1,
+  curStation:  -1,
+  playing:     false,
+  isRadio:     false,
+  repeat:      false,
+  shuffle:     false,
+  vol:         0.8,
+  batt:        85,
+  folderId:    '',
+  apiKey:      '',
+  _fetching:   false,
+  _musicReady: false,
+};
+var audio = document.getElementById('audioEl');
+
+// ── View Router ──────────────────────────────────────────────
+var VIEW_TITLES = { main:'iPod', music:'Music', nowplaying:'Now Playing', radio:'Radio', nowradio:'Now Playing', settings:'Settings' };
+var VIEW_IDS    = { main:'vMain', music:'vMusic', nowplaying:'vNowPlaying', radio:'vRadio', nowradio:'vNowRadio', settings:'vSettings' };
+var BACK_MAP    = { music:'main', radio:'main', settings:'main', nowplaying:'music', nowradio:'radio' };
+
+var VIEW_ORDER = ['main','music','nowplaying','radio','nowradio','settings'];
+function showView(name) {
+  var toDepth = VIEW_ORDER.indexOf(name);
+  Object.keys(VIEW_IDS).forEach(function(k) {
+    var el = document.getElementById(VIEW_IDS[k]);
+    if (k === name) {
+      el.className = 'view active';
+    } else {
+      var kDepth = VIEW_ORDER.indexOf(k);
+      el.className = 'view ' + (kDepth < toDepth ? 'slide-left' : 'slide-right');
+    }
+  });
+  S.view = name;
+  document.getElementById('shTitle').textContent = VIEW_TITLES[name] || 'iPod';
+  if (name === 'music' && S._musicReady) {
+    S._musicReady = false;
+    renderMusic();
+  }
+}
+function navigate(name) { showView(name); }
+function goBack() {
+  var d = BACK_MAP[S.view];
+  if (d) showView(d);
+  else showView('main');
+}
+
+// ── Main Menu ────────────────────────────────────────────────
+function menuSelect(i) {
+  S.menuSel = i;
+  [0,1,2].forEach(function(n) {
+    document.getElementById('mi'+n).classList.toggle('selected', n===i);
+  });
+}
+
+// ── Wheel ────────────────────────────────────────────────────
+function wUp() {
+  if (S.view === 'main')        { S.menuSel = Math.max(0, S.menuSel-1); menuSelect(S.menuSel); }
+  else if (S.view === 'music')  { S.musicSel = Math.max(0, S.musicSel-1); renderMusic(); }
+  else if (S.view === 'radio')  { S.radioSel = Math.max(0, S.radioSel-1); renderStations(); }
+  else if (S.view === 'nowplaying') { S.vol = Math.min(1, S.vol+0.05); applyVol(); }
+}
+function wDown() {
+  if (S.view === 'main')        { S.menuSel = Math.min(2, S.menuSel+1); menuSelect(S.menuSel); }
+  else if (S.view === 'music')  { S.musicSel = Math.min(S.playlist.length-1, S.musicSel+1); renderMusic(); }
+  else if (S.view === 'radio')  { S.radioSel = Math.min(S.filtered.length-1, S.radioSel+1); renderStations(); }
+  else if (S.view === 'nowplaying') { S.vol = Math.max(0, S.vol-0.05); applyVol(); }
+}
+function wBack() {
+  if (S.playing && !S.isRadio) audio.currentTime = Math.max(0, audio.currentTime-5);
+  else goBack();
+}
+function wFwd() {
+  if (S.playing && !S.isRadio) audio.currentTime = Math.min(audio.duration||0, audio.currentTime+5);
+  else playNext();
+}
+function wSelect() {
+  if (S.view === 'main') {
+    var dest = ['music','radio','settings'][S.menuSel];
+    showView(dest);
+    if (dest === 'music'  && S.playlist.length === 0 && !S._fetching) fetchMusic();
+    if (dest === 'radio'  && S.stations.length === 0) loadRadio();
+    if (dest === 'settings') loadSettingsUI();
+  } else if (S.view === 'music') {
+    if (S.playlist.length > 0) { loadTrack(S.musicSel, true); showView('nowplaying'); }
+  } else if (S.view === 'radio') {
+    if (S.filtered.length > 0) { playStation(S.radioSel); showView('nowradio'); }
+  }
+}
+
+// ── Settings ─────────────────────────────────────────────────
+function loadSettingsUI() {
+  document.getElementById('cfgFolderId').value = S.folderId || '';
+  document.getElementById('cfgApiKey').value   = S.apiKey   || '';
+}
+function toggleSetting(key) {
+  S[key] = !S[key];
+  document.getElementById(key==='repeat'?'togRepeat':'togShuffle').classList.toggle('on', S[key]);
+}
+function applyVol() {
+  audio.volume = S.vol;
+  document.getElementById('volLabel').textContent = Math.round(S.vol*100) + '%';
+}
+function setStatus(msg, ok) {
+  var el = document.getElementById('cfgStatus');
+  el.textContent = msg;
+  el.style.color = ok ? '#3a7a3a' : (ok===false ? '#c84a4a' : '#5a7a5a');
+}
+function saveDriveConfig() {
+  var fid = document.getElementById('cfgFolderId').value.trim();
+  var key = document.getElementById('cfgApiKey').value.trim();
+  if (!fid || !key) { setStatus('Folder ID & API Key harus diisi!', false); return; }
+  S.folderId = fid;
+  S.apiKey   = key;
+  try { localStorage.setItem('drive_folder', fid); localStorage.setItem('drive_key', key); } catch(e){}
+  S.playlist = []; S._fetching = false;
+  setStatus('Menyimpan & memuat...', null);
+  fetchMusic();
+}
+function reloadMusic() {
+  if (!S.folderId || !S.apiKey) { setStatus('Isi Folder ID & API Key dulu!', false); return; }
+  S.playlist = []; S._fetching = false;
+  setStatus('Memuat ulang...', null);
+  fetchMusic();
+}
+
+// ── Fetch Music via Google Drive API v3 ──────────────────────
+function fetchMusic() {
+  if (!S.folderId || !S.apiKey) {
+    document.getElementById('musicList').innerHTML =
+      '<div class="empty-msg">Belum dikonfigurasi.<br>Pergi ke <a onclick="navigate(\'settings\')">Settings</a><br>dan isi Folder ID + API Key.</div>';
+    return;
+  }
+  if (S._fetching) return;
+  S._fetching = true;
+
+  document.getElementById('musicList').innerHTML =
+    '<div class="empty-msg">⏳ Memuat lagu dari Drive...</div>';
+
+  var audioMimes = [
+    "mimeType='audio/mpeg'",
+    "mimeType='audio/mp4'",
+    "mimeType='audio/x-m4a'",
+    "mimeType='audio/wav'",
+    "mimeType='audio/ogg'",
+    "mimeType='audio/flac'",
+    "mimeType='audio/aac'",
+  ].join(' or ');
+
+  var q = encodeURIComponent("'" + S.folderId + "' in parents and (" + audioMimes + ") and trashed=false");
+  var fields = encodeURIComponent('files(id,name,mimeType,size)');
+  var url = 'https://www.googleapis.com/drive/v3/files'
+    + '?q=' + q
+    + '&fields=' + fields
+    + '&orderBy=name'
+    + '&pageSize=1000'
+    + '&key=' + encodeURIComponent(S.apiKey);
+
+  fetch(url)
+    .then(function(r) {
+      if (!r.ok) return r.json().then(function(e) { throw new Error(e.error && e.error.message || r.status); });
+      return r.json();
+    })
+    .then(function(data) {
+      var files = data.files || [];
+      if (!files.length) {
+        S._fetching = false;
+        setStatus('0 lagu ditemukan di folder ini.', false);
+        document.getElementById('musicList').innerHTML =
+          '<div class="empty-msg">Tidak ada file audio<br>di folder tersebut.</div>';
+        return;
+      }
+
+      S.playlist = files.map(function(f) {
+        var cleanName = f.name.replace(/\.[^.]+$/, '');
+        var parts = cleanName.split(' - ');
+        var artist = parts.length > 1 ? parts[0].trim() : 'Unknown Artist';
+        var title  = parts.length > 1 ? parts.slice(1).join(' - ').trim() : cleanName;
+        return {
+          id:          f.id,
+          name:        f.name,
+          title:       title,
+          artist:      artist,
+          album:       'Google Drive',
+          art:         null,
+          // URL stream langsung via Drive API (tidak perlu redirect download)
+          streamUrl:   'https://www.googleapis.com/drive/v3/files/' + f.id
+                       + '?alt=media&key=' + encodeURIComponent(S.apiKey),
+          metaLoaded:  false,
+        };
+      });
+
+      S._fetching = false;
+      setStatus(files.length + ' lagu dimuat ✓', true);
+
+      if (S.view === 'music') renderMusic();
+      else S._musicReady = true;
+
+      loadMetaBatch(0);
+    })
+    .catch(function(err) {
+      S._fetching = false;
+      console.error('Drive API error:', err);
+      var msg = err.message || '';
+      var hint = msg.includes('API key') || msg.includes('keyInvalid')
+        ? 'API Key tidak valid.'
+        : msg.includes('notFound') || msg.includes('404')
+          ? 'Folder ID tidak ditemukan.'
+          : msg.includes('forbidden') || msg.includes('403')
+            ? 'Akses ditolak. Pastikan folder Public & API Key benar.'
+            : 'Gagal memuat: ' + (msg || 'cek koneksi.');
+      setStatus(hint, false);
+      document.getElementById('musicList').innerHTML =
+        '<div class="empty-msg">❌ ' + escHtml(hint) + '</div>';
+    });
+}
+
+// ── ID3 Metadata ─────────────────────────────────────────────
+function loadMetaBatch(idx) {
+  if (idx >= S.playlist.length) return;
+  var track = S.playlist[idx];
+  if (track.metaLoaded) { loadMetaBatch(idx+1); return; }
+  try {
+    jsmediatags.read(track.streamUrl, {
+      onSuccess: function(tag) {
+        var t = tag.tags;
+        if (t.title)  track.title  = t.title;
+        if (t.artist) track.artist = t.artist;
+        if (t.album)  track.album  = t.album;
+        track.metaLoaded = true;
+        if (t.picture) {
+          var pic = t.picture, b64 = '';
+          for (var i=0;i<pic.data.length;i++) b64 += String.fromCharCode(pic.data[i]);
+          track.art = 'data:'+pic.format+';base64,'+btoa(b64);
+        }
+        if (S.curTrack === idx) updateNowPlayingMeta();
+        renderMusic();
+        loadMetaBatch(idx+1);
+      },
+      onError: function() { track.metaLoaded = true; loadMetaBatch(idx+1); }
+    });
+  } catch(e) { track.metaLoaded = true; loadMetaBatch(idx+1); }
+}
+
+// ── Render Music ─────────────────────────────────────────────
+function renderMusic() {
+  var el = document.getElementById('musicList');
+  if (!S.playlist.length) {
+    el.innerHTML = '<div class="empty-msg">Belum ada lagu.<br>Pergi ke <a onclick="navigate(\'settings\')">Settings</a><br>dan isi Folder ID + API Key.</div>';
+    return;
+  }
+  el.innerHTML = S.playlist.map(function(t, i) {
+    return '<div class="track-item'+(i===S.musicSel?' selected':'')+'"'
+      +' onclick="S.musicSel='+i+';renderMusic()"'
+      +' ondblclick="loadTrack('+i+',true);showView(\'nowplaying\')">'
+      +'<span class="ti-num">'+(i+1)+'</span>'
+      +'<div class="ti-info">'
+        +'<div class="ti-title">'+escHtml(t.title)+'</div>'
+        +'<div class="ti-artist">'+escHtml(t.artist)+'</div>'
+      +'</div></div>';
+  }).join('');
+  var sel = el.querySelector('.selected');
+  if (sel) sel.scrollIntoView({ block:'nearest' });
+}
+
+// ── Load & Play Track ─────────────────────────────────────────
+function loadTrack(idx, play) {
+  var t = S.playlist[idx];
+  S.curTrack = idx; S.isRadio = false;
+  audio.src = t.streamUrl;
+  audio.load();
+  updateNowPlayingMeta();
+  resetProgress();
+  if (play) startPlay(); else updateWheelBtn();
+}
+function updateNowPlayingMeta() {
+  var t = S.playlist[S.curTrack]; if (!t) return;
+  document.getElementById('npTitle').textContent  = t.title;
+  document.getElementById('npArtist').textContent = t.artist;
+  document.getElementById('npAlbum').textContent  = t.album;
+  var artEl = document.getElementById('albumArt');
+  artEl.innerHTML = t.art ? '<img src="'+t.art+'" alt="cover"/>' : '<span id="artEmoji">♪</span>';
+}
+function startPlay() {
+  audio.volume = S.vol;
+  audio.play().then(function() { S.playing = true; updateWheelBtn(); }).catch(function(){});
+}
+function togglePlay() {
+  if (!audio.src && S.playlist.length===0 && S.curStation===-1) return;
+  if (S.playing) { audio.pause(); S.playing = false; }
+  else if (audio.src) { startPlay(); }
+  else if (S.playlist.length > 0) { loadTrack(0, true); showView('nowplaying'); }
+  updateWheelBtn();
+}
+function playNext() {
+  if (S.isRadio) { playStation((S.curStation+1) % S.filtered.length); return; }
+  if (!S.playlist.length) return;
+  var next = S.shuffle ? Math.floor(Math.random()*S.playlist.length) : (S.curTrack+1)%S.playlist.length;
+  loadTrack(next, true);
+}
+function playPrev() {
+  if (!S.playlist.length) return;
+  loadTrack((S.curTrack-1+S.playlist.length)%S.playlist.length, true);
+}
+function updateWheelBtn() {
+  document.getElementById('wcenter').textContent = S.playing ? '❙❙' : '▶';
+}
+
+// ── Progress ─────────────────────────────────────────────────
+function resetProgress() {
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('tNow').textContent = '0:00';
+  document.getElementById('tTot').textContent = '0:00';
+}
+function seekAudio(e) {
+  if (!audio.duration || S.isRadio) return;
+  var r = e.currentTarget.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+}
+audio.addEventListener('timeupdate', function() {
+  if (S.isRadio || !audio.duration) return;
+  var p = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('progFill').style.width = p.toFixed(1)+'%';
+  document.getElementById('tNow').textContent = fmt(audio.currentTime);
+  document.getElementById('tTot').textContent = fmt(audio.duration);
+});
+audio.addEventListener('ended', function() {
+  if (S.isRadio) return;
+  if (S.repeat) audio.play(); else playNext();
+});
+function fmt(s) { var m=Math.floor(s/60),sec=Math.floor(s%60); return m+':'+(sec<10?'0':'')+sec; }
+
+// ── Radio ─────────────────────────────────────────────────────
+function loadRadio() {
+  document.getElementById('radioList').innerHTML = '<div class="list-msg">Memuat 300+ stasiun...</div>';
+  fetch('https://de1.api.radio-browser.info/json/stations/bycountryexact/Indonesia?limit=300&hidebroken=true&order=votes&reverse=true')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      S.stations = data
+        .filter(function(s){ return s.url_resolved && s.name && s.name.trim(); })
+        .map(function(s){
+          return { name:s.name.trim(), url:s.url_resolved,
+            location:s.state||s.city||'Indonesia',
+            tags:(s.tags||'').split(',').slice(0,3).filter(Boolean).join(' · ') };
+        });
+      S.filtered = S.stations.slice(); S.radioSel = 0; renderStations();
+    })
+    .catch(function(){ document.getElementById('radioList').innerHTML='<div class="list-msg">Gagal memuat.<br>Cek koneksi.</div>'; });
+}
+function filterStations(q) {
+  var ql = q.toLowerCase();
+  S.filtered = ql ? S.stations.filter(function(s){
+    return s.name.toLowerCase().includes(ql)||s.location.toLowerCase().includes(ql)||s.tags.toLowerCase().includes(ql);
+  }) : S.stations.slice();
+  S.radioSel = 0; renderStations();
+}
+function renderStations() {
+  var el = document.getElementById('radioList');
+  if (!S.filtered.length) { el.innerHTML='<div class="list-msg">Stasiun tidak ditemukan.</div>'; return; }
+  el.innerHTML = S.filtered.map(function(s,i){
+    return '<div class="station-item'+(i===S.radioSel?' selected':'')+'"'
+      +' onclick="S.radioSel='+i+';renderStations()"'
+      +' ondblclick="playStation('+i+');showView(\'nowradio\')">'
+      +'<div class="st-dot"></div>'
+      +'<div class="st-info"><div class="st-name">'+escHtml(s.name)+'</div>'
+      +'<div class="st-loc">'+escHtml(s.location)+(s.tags?' · '+escHtml(s.tags):'')+'</div></div></div>';
+  }).join('');
+  var sel = el.querySelector('.selected'); if (sel) sel.scrollIntoView({block:'nearest'});
+}
+function playStation(idx) {
+  var s = S.filtered[idx]; S.curStation=idx; S.isRadio=true;
+  audio.src=s.url; audio.load(); audio.volume=S.vol;
+  document.getElementById('rnName').textContent=s.name;
+  document.getElementById('rnLoc').textContent=s.location;
+  document.getElementById('rnTag').textContent=s.tags;
+  audio.play().then(function(){ S.playing=true; updateWheelBtn(); }).catch(function(){});
+}
+
+// ── Clock & Battery ───────────────────────────────────────────
+function updateClock() {
+  var n=new Date(), h=n.getHours(), m=n.getMinutes();
+  document.getElementById('clockEl').textContent = h+':'+(m<10?'0':'')+m;
+}
+updateClock(); setInterval(updateClock, 10000);
+setInterval(function(){
+  if (S.playing) S.batt = Math.max(5, S.batt-0.03);
+  var fill = document.getElementById('battFill');
+  fill.style.width = S.batt+'%';
+  fill.style.background = S.batt>50?'#7ccc7c':S.batt>20?'#cccc44':'#cc4444';
+}, 30000);
+
+// ── Keyboard ─────────────────────────────────────────────────
+document.addEventListener('keydown', function(e){
+  if (e.key==='ArrowUp')   { e.preventDefault(); wUp(); }
+  if (e.key==='ArrowDown') { e.preventDefault(); wDown(); }
+  if (e.key==='ArrowLeft') wBack();
+  if (e.key==='ArrowRight') wFwd();
+  if (e.key==='Enter')     wSelect();
+  if (e.key==='Escape')    goBack();
+  if (e.key===' ')         { e.preventDefault(); togglePlay(); }
+});
+
+// ── Helpers ──────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init: load saved config dari localStorage ────────────────
+(function init() {
+  try {
+    var fid = localStorage.getItem('drive_folder');
+    var key = localStorage.getItem('drive_key');
+    if (fid) S.folderId = fid;
+    if (key) S.apiKey   = key;
+  } catch(e) {}
+
+  // Fallback ke hardcode config kalau localStorage kosong
+  if (!S.folderId && DEFAULT_FOLDER_ID) S.folderId = DEFAULT_FOLDER_ID;
+  if (!S.apiKey   && DEFAULT_API_KEY)   S.apiKey   = DEFAULT_API_KEY;
+
+  // Mulai selalu dari main menu
+  showView('main');
+  // Kalau sudah ada config, fetch background
+  if (S.folderId && S.apiKey) {
+    setTimeout(fetchMusic, 400);
+  }
+})();
+</script>
+</body>
+</html>
